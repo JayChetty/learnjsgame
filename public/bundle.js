@@ -13,9 +13,16 @@ window.onload = function(){
 
 	document.body.appendChild(renderer.view);
 
-	var stage = new PIXI.Stage;
+  var interactive = true;
+  var stage = new PIXI.Stage(0x66FF99, interactive);
 
-	var bunnyTexture = PIXI.Texture.fromImage("bunny.png");
+
+
+  // stage.click(function(data){
+  //   console.log('mousdown on stage', data);
+  // })
+
+	var bunnyTexture = PIXI.Texture.fromImage("blob2.png");
 	var bunny = new PIXI.Sprite(bunnyTexture);
 
 	bunny.position.x = 400;
@@ -28,11 +35,14 @@ window.onload = function(){
 
 	requestAnimationFrame(animate);
 
+  stage.mousedown = function(data){
+    console.log('mousedown', data)
+    bunny.position.x = data.global.x;
+    bunny.position.y = data.global.y;
+  }
+
 	function animate() {
-		  bunny.rotation += 0.01;
-
 		  renderer.render(stage);
-
 		  requestAnimationFrame(animate);
 	}
 }
