@@ -13,10 +13,10 @@ var Position = State.extend({
   },
 
   xDifference: function(targetPosition){
-    return Math.ceil(targetPosition.x - this.x);
+    return targetPosition.x - this.x;
   },
   yDifference: function(targetPosition){
-    return Math.ceil(targetPosition.y - this.y);
+    return targetPosition.y - this.y;
   },
 
   distanceTo: function(targetPosition){

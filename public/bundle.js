@@ -20,33 +20,6 @@ window.onload = function(){
 	var renderer = new PIXI.WebGLRenderer(800, 600);
   var stageView = new StageView(renderer)
 	document.body.appendChild(stageView.renderer.view);
-
- //  var interactive = true;
- //  var stage = new PIXI.Stage(0x66FF99, interactive);
-
-	// var bunnyTexture = PIXI.Texture.fromImage("blob2.png");
-	// var bunny = new PIXI.Sprite(bunnyTexture);
-
-	// bunny.position.x = 400;
-	// bunny.position.y = 300;
-
-	// bunny.scale.x = 2;
-	// bunny.scale.y = 2;
-
-	// stage.addChild(bunny);
-
-	// requestAnimationFrame(animate);
-
- //  stage.mousedown = function(data){
- //    console.log('mousedown', data)
- //    bunny.position.x = data.global.x;
- //    bunny.position.y = data.global.y;
- //  }
-
-	// function animate() {
-	// 	  renderer.render(stage);
-	// 	  requestAnimationFrame(animate);
-	// }
 }
 
 
@@ -78,14 +51,14 @@ MoveableDisplayObject = DisplayObject.extend({
     if(this.targetPosition){
       console.log('moving towards target')
       this.moveTowardsPosition(this.targetPosition)
-      if(this.position.distanceTo(this.targetPosition)<this.speed){
+      if(this.position.distanceTo(this.targetPosition)<this.speed*5){
         this.targetPosition = null;
         console.log('stopping')
       }
     }
   },
   moveTowardsPosition:function(targetPosition){
-    var pixelsPerMove = this.speed;
+    var pixelsPerMove = this.speed * 5;
     var diffX = this.position.xDifference(targetPosition);
     var diffY = this.position.yDifference(targetPosition);
 
@@ -95,22 +68,32 @@ MoveableDisplayObject = DisplayObject.extend({
     var absDiffX = Math.abs(diffX);
     var absDiffY = Math.abs(diffY);
 
+    var totalDiff = absDiffX + absDiffY
+
     if( diffX!==0 ){
       if( diffY === 0  ){
         var absMoveX = pixelsPerMove;
       } else {
-        var absMoveX = pixelsPerMove * (absDiffX/(absDiffX+absDiffY));
+        var xRatio = absDiffX/totalDiff
+        console.log('xratio', xRatio)
+        var absMoveX = pixelsPerMove * xRatio;
       }
-      this.position.x = this.position.x + Math.ceil( math.sign(diffX) * absMoveX );
+      var xMove = Math.ceil( math.sign(diffX) * absMoveX );
+      console.log('xMove', xMove);
+      this.position.x = this.position.x + xMove;
     }
 
     if( diffY!==0 ){
       if( diffX === 0  ){
         var absMoveY = pixelsPerMove
       } else {
-        var absMoveY = pixelsPerMove * (absDiffY/(absDiffX+absDiffY));
+        var yRatio = absDiffY/totalDiff
+        console.log('xratio', xRatio)
+        var absMoveY = pixelsPerMove * yRatio;
       }
-      this.position.y = this.position.y + Math.ceil( math.sign(diffY) * absMoveY );
+      var yMove = Math.ceil( math.sign(diffY) * absMoveY );
+      console.log('yMove', yMove);
+      this.position.y = this.position.y + yMove;
     } 
   }
 })
@@ -132,10 +115,10 @@ var Position = State.extend({
   },
 
   xDifference: function(targetPosition){
-    return Math.ceil(targetPosition.x - this.x);
+    return targetPosition.x - this.x;
   },
   yDifference: function(targetPosition){
-    return Math.ceil(targetPosition.y - this.y);
+    return targetPosition.y - this.y;
   },
 
   distanceTo: function(targetPosition){
@@ -2795,7 +2778,7 @@ var StageView = function(renderer){
   var blobTexture = PIXI.Texture.fromImage("blob2.png");
   this.blob = new PIXI.Sprite(blobTexture);
 
-  this.blobModel = new MoveableDisplayObject({speed: 4})
+  this.blobModel = new MoveableDisplayObject({speed: 1})
   this.stage.addChild(this.blob);
   requestAnimationFrame(this.animate.bind(this));
 
@@ -2810,9 +2793,9 @@ var StageView = function(renderer){
 
 StageView.prototype = {
   animate: function(){
-    // if (this.drawCount%100===0){
-      this.updateModelPositions();
-    // }
+    if (this.drawCount%1===0){
+    this.updateModelPositions();
+    }
     this.setViewPositions();
     this.renderer.render(this.stage);
     requestAnimationFrame(this.animate.bind(this));

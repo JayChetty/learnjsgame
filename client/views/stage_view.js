@@ -8,7 +8,7 @@ var StageView = function(renderer){
   var blobTexture = PIXI.Texture.fromImage("blob2.png");
   this.blob = new PIXI.Sprite(blobTexture);
 
-  this.blobModel = new MoveableDisplayObject({speed: 4})
+  this.blobModel = new MoveableDisplayObject({speed: 1})
   this.stage.addChild(this.blob);
   requestAnimationFrame(this.animate.bind(this));
 
@@ -23,9 +23,9 @@ var StageView = function(renderer){
 
 StageView.prototype = {
   animate: function(){
-    // if (this.drawCount%100===0){
-      this.updateModelPositions();
-    // }
+    if (this.drawCount%1===0){
+    this.updateModelPositions();
+    }
     this.setViewPositions();
     this.renderer.render(this.stage);
     requestAnimationFrame(this.animate.bind(this));

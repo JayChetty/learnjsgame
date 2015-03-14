@@ -25,7 +25,7 @@ it('should be abe to have a target position',function(){
   var moveableDisplayObject = new MoveableDisplayObject();
   moveableDisplayObject.targetPosition = {x:100,y:0};
   expect(moveableDisplayObject.targetPosition.x).to.equal(100);
-  expect(moveableDisplayObject.targetPosition.y).to.equal(0);
+  expect(moveableDisplayObject.targetPosition.y).to.equal(10);
 })
 
 it('should be abe to move torwards target position',function(){
@@ -33,5 +33,5 @@ it('should be abe to move torwards target position',function(){
   moveableDisplayObject.targetPosition = {x:100,y:0};
   moveableDisplayObject.moveTowardsTarget();
   expect(moveableDisplayObject.position.y).to.equal(0);
-  expect(moveableDisplayObject.position.x).to.equal(1);
+  expect(moveableDisplayObject.position.x).to.equal(10);
 })
