@@ -1,10 +1,17 @@
 State = require('ampersand-state');
 DisplayObject = require('./display_object');
 math = require('../lib/math')
+Position = require('./position');
 
 MoveableDisplayObject = DisplayObject.extend({
   props:{
-    speed:'number'
+    speed:'number',
+    targetPosition: Position
+  },
+  moveTowardsTarget:function(){
+    if(this.targetPosition){
+      this.moveTowardsPosition(this.targetPosition)
+    }
   },
   moveTowardsPosition:function(targetPosition){
     var pixelsPerMove = 10
