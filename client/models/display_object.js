@@ -3,6 +3,9 @@ Position = require('./position');
 var DisplayObject = State.extend({
   children:{
     position:Position
+  },
+  observe:function(){
+    return {};
   }
 })
 

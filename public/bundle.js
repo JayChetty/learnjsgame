@@ -23,17 +23,32 @@ window.onload = function(){
 }
 
 
-},{"./views/stage_view":"/home/jay/Programming/JSProjects/learnjsgame/client/views/stage_view.js"}],"/home/jay/Programming/JSProjects/learnjsgame/client/models/display_object.js":[function(require,module,exports){
+},{"./views/stage_view":"/home/jay/Programming/JSProjects/learnjsgame/client/views/stage_view.js"}],"/home/jay/Programming/JSProjects/learnjsgame/client/mixins/seer.js":[function(require,module,exports){
+module.exports = {
+  see:function(object){
+    return JSON.stringify(object);
+  }
+}
+},{}],"/home/jay/Programming/JSProjects/learnjsgame/client/models/display_object.js":[function(require,module,exports){
 State = require('ampersand-state');
 Position = require('./position');
 var DisplayObject = State.extend({
   children:{
     position:Position
+  },
+  observe:function(){
+    return {};
   }
 })
 
 module.exports = DisplayObject
-},{"./position":"/home/jay/Programming/JSProjects/learnjsgame/client/models/position.js","ampersand-state":"/home/jay/Programming/JSProjects/learnjsgame/client/node_modules/ampersand-state/ampersand-state.js"}],"/home/jay/Programming/JSProjects/learnjsgame/client/models/moveable_display_object.js":[function(require,module,exports){
+},{"./position":"/home/jay/Programming/JSProjects/learnjsgame/client/models/position.js","ampersand-state":"/home/jay/Programming/JSProjects/learnjsgame/client/node_modules/ampersand-state/ampersand-state.js"}],"/home/jay/Programming/JSProjects/learnjsgame/client/models/hero.js":[function(require,module,exports){
+MoveableDisplayObject = require('./moveable_display_object');
+seerMixin = require('../mixins/seer.js')
+var Hero = MoveableDisplayObject.extend(seerMixin, {})
+
+module.exports = Hero
+},{"../mixins/seer.js":"/home/jay/Programming/JSProjects/learnjsgame/client/mixins/seer.js","./moveable_display_object":"/home/jay/Programming/JSProjects/learnjsgame/client/models/moveable_display_object.js"}],"/home/jay/Programming/JSProjects/learnjsgame/client/models/moveable_display_object.js":[function(require,module,exports){
 State = require('ampersand-state');
 DisplayObject = require('./display_object');
 math = require('../lib/math')
@@ -2768,25 +2783,30 @@ module.exports = KeyTreeStore;
 }.call(this));
 
 },{}],"/home/jay/Programming/JSProjects/learnjsgame/client/views/stage_view.js":[function(require,module,exports){
-var MoveableDisplayObject = require('../models/moveable_display_object')
+var Hero = require('../models/hero')
+var DisplayObject = require('../models/display_object')
 
 var StageView = function(renderer){
   this.drawCount = 0
   this.renderer = renderer;
   var interactive = true;
   this.stage = new PIXI.Stage(0x66FF99, interactive);
-  var blobTexture = PIXI.Texture.fromImage("blob2.png");
-  this.blob = new PIXI.Sprite(blobTexture);
 
-  this.blobModel = new MoveableDisplayObject({speed: 1})
-  this.stage.addChild(this.blob);
+  var blobTexture = PIXI.Texture.fromImage("blob2.png");
+  this.heroSprite = new PIXI.Sprite(blobTexture);
+
+  this.doorSprite = new PIXI.Sprite(blobTexture);
+
+  this.doorSprite.position.x = 100;
+  this.doorSprite.position.y = 100;
+
+  this.heroModel = new Hero({speed: 1})
+  this.stage.addChild(this.heroSprite);
+  this.stage.addChild(this.doorSprite)
   requestAnimationFrame(this.animate.bind(this));
 
   this.stage.mousedown = function(data){
-    console.log('mousedown', data)
-    // blob.position.x = data.global.x;
-    // blob.position.y = data.global.y; 
-    this.blobModel.targetPosition = { x:data.global.x, y:data.global.y }
+    this.heroModel.targetPosition = { x:data.global.x, y:data.global.y }
   }.bind(this)
 
 }
@@ -2794,7 +2814,7 @@ var StageView = function(renderer){
 StageView.prototype = {
   animate: function(){
     if (this.drawCount%1===0){
-    this.updateModelPositions();
+      this.updateModelPositions();
     }
     this.setViewPositions();
     this.renderer.render(this.stage);
@@ -2802,13 +2822,13 @@ StageView.prototype = {
     this.drawCount++;
   },
   updateModelPositions:function(){
-    this.blobModel.moveTowardsTarget();
+    this.heroModel.moveTowardsTarget();
   },
   setViewPositions: function(){
-    this.blob.position.x = this.blobModel.position.x;
-    this.blob.position.y = this.blobModel.position.y;
+    this.heroSprite.position.x = this.heroModel.position.x;
+    this.heroSprite.position.y = this.heroModel.position.y;
   }
 }
 
 module.exports = StageView;
-},{"../models/moveable_display_object":"/home/jay/Programming/JSProjects/learnjsgame/client/models/moveable_display_object.js"}]},{},["/home/jay/Programming/JSProjects/learnjsgame/client/main.js"]);
+},{"../models/display_object":"/home/jay/Programming/JSProjects/learnjsgame/client/models/display_object.js","../models/hero":"/home/jay/Programming/JSProjects/learnjsgame/client/models/hero.js"}]},{},["/home/jay/Programming/JSProjects/learnjsgame/client/main.js"]);
