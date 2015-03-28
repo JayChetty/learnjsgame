@@ -1,5 +1,5 @@
-var constructor = {
-  positionPrototype:{
+var constructorSpec = {
+  proto:{
     xDifference: function(targetPosition){
       return targetPosition.x - this.x;
     },
@@ -11,15 +11,14 @@ var constructor = {
       var absdiffX = Math.abs(this.xDifference(targetPosition));
       var absdiffY = Math.abs(this.yDifference(targetPosition));
       return Math.sqrt(Math.pow(absdiffX,2) + Math.pow(absdiffY,2));
-    }  
+    }      
   },
-  construct:function(spec){
-    spec = spec || {}
-    var that = Object.create(this.positionPrototype);
-    that.x = spec.x || 0;
-    that.y = spec.y || 0;
-    return that;
+  initialize:function(spec,spawn){
+    spawn.x = spec.x || 0;
+    spawn.y = spec.y || 0;
   }
 }
+var constructorMaker = require('./constructor_maker')
+var construct = constructorMaker.createConstructor(constructorSpec);
 
-module.exports = constructor;
+module.exports = construct

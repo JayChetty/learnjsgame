@@ -1,22 +1,16 @@
 var moveable_object_constructor = require('./moveable_object_constructor');
 var position_constructor = require('./position_constructor');
 var _ = require('underscore');
-var seer = require('../mixins/seer');
 
-var constructor = {
 
-  heroPrototype:function(){
-    if(!this.proto){
-      this.proto = _.extend({},seer,moveable_object_constructor.displayObjectPrototype)
-    }
-    return this.proto;
-  },
-  construct:function(spec){
-    spec = spec || {};
-    var that = Object.create(this.heroPrototype());
-    that.position = spec.position || position_constructor.construct();
-    return that;
+var constructorSpec = {
+  baseProto: moveable_object_constructor.proto,
+  modules: [require('../mixins/seer')],
+  initialize:function(spec,spawn){
+    spawn.position = spec.position || position_constructor.construct();
   }
 }
+var constructorMaker = require('./constructor_maker')
+var construct = constructorMaker.createConstructor(constructorSpec);
 
-module.exports = constructor;
+module.exports = construct

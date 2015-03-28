@@ -1,13 +1,11 @@
 var position_constructor = require('./position_constructor');
 
-var constructor = {
-  displayObjectPrototype:{},
-  construct:function(spec){
-    spec = spec || {};
-    var that = Object.create(this.displayObjectPrototype);
-    that.position = spec.position || position_constructor.construct();
-    return that;
+var constructorSpec = {
+  initialize:function(spec,spawn){
+    spawn.position = spec.position || position_constructor.construct();
   }
 }
+var constructorMaker = require('./constructor_maker')
+var construct = constructorMaker.createConstructor(constructorSpec);
 
-module.exports = constructor;
+module.exports = construct
