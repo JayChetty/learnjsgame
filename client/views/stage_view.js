@@ -1,4 +1,5 @@
 var heroConstructor = require('../models/hero_constructor')
+var spriteViewConstructor = require('./sprite_view_constructor')
 var DisplayObjectConstructor = require('../models/display_object_constructor')
 
 var StageView = function(renderer){
@@ -16,26 +17,24 @@ var StageView = function(renderer){
   this.doorSprite.position.x = 100;
   this.doorSprite.position.y = 100;
 
-  this.stage.mousedown = function(data){
+  this.stage.mouseup = function(data){
     this.heroModel.targetPosition = { x:data.global.x, y:data.global.y }
   }.bind(this)
 
-  this.doorSprite.mouseover = function(){
+  this.doorSprite.mousedown = function(){
     console.log('doorSpriteClick');
     console.log(this.heroModel.see({a:1,b:2}));
   }.bind(this);
 
-  this.heroSprite.mouseover = function(){
+  this.heroSprite.mousedown = function(){
     console.log('heroSpriteClick');
   }.bind(this);
 
   this.heroModel = heroConstructor.construct({speed: 1})
+  this.heroSpriteView = spriteViewConstructor.construct({sprite:this.heroSprite, model:this.heroModel})
   this.stage.addChild(this.heroSprite);
   this.stage.addChild(this.doorSprite)
   requestAnimationFrame(this.animate.bind(this));
-
-
-
 }
 
 StageView.prototype = {
@@ -52,8 +51,7 @@ StageView.prototype = {
     this.heroModel.moveTowardsTarget();
   },
   setViewPositions: function(){
-    this.heroSprite.position.x = this.heroModel.position.x;
-    this.heroSprite.position.y = this.heroModel.position.y;
+    this.heroSpriteView.syncPosition();
   }
 }
 
