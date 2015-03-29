@@ -29,1222 +29,149 @@ module.exports = {
     return JSON.stringify(object);
   }
 }
-},{}],"/home/jay/Programming/JSProjects/learnjsgame/client/models/display_object.js":[function(require,module,exports){
-State = require('ampersand-state');
-Position = require('./position');
-var DisplayObject = State.extend({
-  children:{
-    position:Position
-  },
-  observe:function(){
-    return {};
-  }
-})
-
-module.exports = DisplayObject
-},{"./position":"/home/jay/Programming/JSProjects/learnjsgame/client/models/position.js","ampersand-state":"/home/jay/Programming/JSProjects/learnjsgame/client/node_modules/ampersand-state/ampersand-state.js"}],"/home/jay/Programming/JSProjects/learnjsgame/client/models/hero.js":[function(require,module,exports){
-MoveableDisplayObject = require('./moveable_display_object');
-seerMixin = require('../mixins/seer.js')
-var Hero = MoveableDisplayObject.extend(seerMixin, {})
-
-module.exports = Hero
-},{"../mixins/seer.js":"/home/jay/Programming/JSProjects/learnjsgame/client/mixins/seer.js","./moveable_display_object":"/home/jay/Programming/JSProjects/learnjsgame/client/models/moveable_display_object.js"}],"/home/jay/Programming/JSProjects/learnjsgame/client/models/moveable_display_object.js":[function(require,module,exports){
-State = require('ampersand-state');
-DisplayObject = require('./display_object');
-math = require('../lib/math')
-Position = require('./position');
-
-MoveableDisplayObject = DisplayObject.extend({
-  props:{
-    speed:{
-      type:'number',
-      default: 1
-    },
-    targetPosition: Position
-  },
-  moveTowardsTarget:function(){
-    if(this.targetPosition){
-      console.log('moving towards target')
-      this.moveTowardsPosition(this.targetPosition)
-      if(this.position.distanceTo(this.targetPosition)<this.speed*5){
-        this.targetPosition = null;
-        console.log('stopping')
-      }
-    }
-  },
-  moveTowardsPosition:function(targetPosition){
-    var pixelsPerMove = this.speed * 5;
-    var diffX = this.position.xDifference(targetPosition);
-    var diffY = this.position.yDifference(targetPosition);
-
-    console.log('diffX', diffX);
-    console.log('diffY', diffY);
-
-    var absDiffX = Math.abs(diffX);
-    var absDiffY = Math.abs(diffY);
-
-    var totalDiff = absDiffX + absDiffY
-
-    if( diffX!==0 ){
-      if( diffY === 0  ){
-        var absMoveX = pixelsPerMove;
-      } else {
-        var xRatio = absDiffX/totalDiff
-        console.log('xratio', xRatio)
-        var absMoveX = pixelsPerMove * xRatio;
-      }
-      var xMove = Math.ceil( math.sign(diffX) * absMoveX );
-      console.log('xMove', xMove);
-      this.position.x = this.position.x + xMove;
-    }
-
-    if( diffY!==0 ){
-      if( diffX === 0  ){
-        var absMoveY = pixelsPerMove
-      } else {
-        var yRatio = absDiffY/totalDiff
-        console.log('xratio', xRatio)
-        var absMoveY = pixelsPerMove * yRatio;
-      }
-      var yMove = Math.ceil( math.sign(diffY) * absMoveY );
-      console.log('yMove', yMove);
-      this.position.y = this.position.y + yMove;
-    } 
-  }
-})
-
-module.exports = MoveableDisplayObject
-},{"../lib/math":"/home/jay/Programming/JSProjects/learnjsgame/client/lib/math.js","./display_object":"/home/jay/Programming/JSProjects/learnjsgame/client/models/display_object.js","./position":"/home/jay/Programming/JSProjects/learnjsgame/client/models/position.js","ampersand-state":"/home/jay/Programming/JSProjects/learnjsgame/client/node_modules/ampersand-state/ampersand-state.js"}],"/home/jay/Programming/JSProjects/learnjsgame/client/models/position.js":[function(require,module,exports){
-State = require('ampersand-state');
-
-var Position = State.extend({
-  props:{
-    x:{
-      type:'number',
-      default:0
-    },
-    y:{
-      type:'number',
-      default:0
-    }
-  },
-
-  xDifference: function(targetPosition){
-    return targetPosition.x - this.x;
-  },
-  yDifference: function(targetPosition){
-    return targetPosition.y - this.y;
-  },
-
-  distanceTo: function(targetPosition){
-    var absdiffX = Math.abs(this.xDifference(targetPosition))
-    var absdiffY = Math.abs(this.yDifference(targetPosition))
-    return Math.sqrt(Math.pow(absdiffX,2) + Math.pow(absdiffY,2))
-  }
-})
-
-module.exports = Position
-},{"ampersand-state":"/home/jay/Programming/JSProjects/learnjsgame/client/node_modules/ampersand-state/ampersand-state.js"}],"/home/jay/Programming/JSProjects/learnjsgame/client/node_modules/ampersand-state/ampersand-state.js":[function(require,module,exports){
-;if (typeof window !== "undefined") {  window.ampersand = window.ampersand || {};  window.ampersand["ampersand-state"] = window.ampersand["ampersand-state"] || [];  window.ampersand["ampersand-state"].push("4.4.5");}
+},{}],"/home/jay/Programming/JSProjects/learnjsgame/client/models/constructor_maker.js":[function(require,module,exports){
 var _ = require('underscore');
-var BBEvents = require('backbone-events-standalone');
-var KeyTree = require('key-tree-store');
-var arrayNext = require('array-next');
-var changeRE = /^change:/;
-
-function Base(attrs, options) {
-    options || (options = {});
-    this.cid || (this.cid = _.uniqueId('state'));
-    this._events = {};
-    this._values = {};
-    this._definition = Object.create(this._definition);
-    if (options.parse) attrs = this.parse(attrs, options);
-    this.parent = options.parent;
-    this.collection = options.collection;
-    this._keyTree = new KeyTree();
-    this._initCollections();
-    this._initChildren();
-    this._cache = {};
-    this._previousAttributes = {};
-    if (attrs) this.set(attrs, _.extend({silent: true, initial: true}, options));
-    this._changed = {};
-    if (this._derived) this._initDerived();
-    if (options.init !== false) this.initialize.apply(this, arguments);
-}
-
-
-_.extend(Base.prototype, BBEvents, {
-    // can be allow, ignore, reject
-    extraProperties: 'ignore',
-
-    idAttribute: 'id',
-
-    namespaceAttribute: 'namespace',
-
-    typeAttribute: 'modelType',
-
-    // Stubbed out to be overwritten
-    initialize: function () {
-        return this;
-    },
-
-    // Get ID of model per configuration.
-    // Should *always* be how ID is determined by other code.
-    getId: function () {
-        return this[this.idAttribute];
-    },
-
-    // Get namespace of model per configuration.
-    // Should *always* be how namespace is determined by other code.
-    getNamespace: function () {
-        return this[this.namespaceAttribute];
-    },
-
-    // Get type of model per configuration.
-    // Should *always* be how type is determined by other code.
-    getType: function () {
-        return this[this.typeAttribute];
-    },
-
-    // A model is new if it has never been saved to the server, and lacks an id.
-    isNew: function () {
-        return this.getId() == null;
-    },
-
-    // get HTML-escaped value of attribute
-    escape: function (attr) {
-        return _.escape(this.get(attr));
-    },
-
-    // Check if the model is currently in a valid state.
-    isValid: function (options) {
-        return this._validate({}, _.extend(options || {}, { validate: true }));
-    },
-
-    // Parse can be used remap/restructure/rename incoming properties
-    // before they are applied to attributes.
-    parse: function (resp, options) {
-        return resp;
-    },
-
-    // Serialize is the inverse of `parse` it lets you massage data
-    // on the way out. Before, sending to server, for example.
-    serialize: function () {
-        var res = this.getAttributes({props: true}, true);
-        _.each(this._children, function (value, key) {
-            res[key] = this[key].serialize();
-        }, this);
-        _.each(this._collections, function (value, key) {
-            res[key] = this[key].serialize();
-        }, this);
-        return res;
-    },
-
-    // Main set method used by generated setters/getters and can
-    // be used directly if you need to pass options or set multiple
-    // properties at once.
-    set: function (key, value, options) {
-        var self = this;
-        var extraProperties = this.extraProperties;
-        var triggers = [];
-        var changing, changes, newType, newVal, def, cast, err, attr,
-            attrs, dataType, silent, unset, currentVal, initial, hasChanged, isEqual;
-
-        // Handle both `"key", value` and `{key: value}` -style arguments.
-        if (_.isObject(key) || key === null) {
-            attrs = key;
-            options = value;
-        } else {
-            attrs = {};
-            attrs[key] = value;
-        }
-
-        options = options || {};
-
-        if (!this._validate(attrs, options)) return false;
-
-        // Extract attributes and options.
-        unset = options.unset;
-        silent = options.silent;
-        initial = options.initial;
-
-        changes = [];
-        changing = this._changing;
-        this._changing = true;
-
-        // if not already changing, store previous
-        if (!changing) {
-            this._previousAttributes = this.attributes;
-            this._changed = {};
-        }
-
-        // For each `set` attribute...
-        for (attr in attrs) {
-            newVal = attrs[attr];
-            newType = typeof newVal;
-            currentVal = this._values[attr];
-            def = this._definition[attr];
-
-
-            if (!def) {
-                // if this is a child model or collection
-                if (this._children[attr] || this._collections[attr]) {
-                    this[attr].set(newVal, options);
-                    continue;
-                } else if (extraProperties === 'ignore') {
-                    continue;
-                } else if (extraProperties === 'reject') {
-                    throw new TypeError('No "' + attr + '" property defined on ' + (this.type || 'this') + ' model and extraProperties not set to "ignore" or "allow"');
-                } else if (extraProperties === 'allow') {
-                    def = this._createPropertyDefinition(attr, 'any');
-                } else if (extraProperties) {
-                    throw new TypeError('Invalid value for extraProperties: "' + extraProperties + '"');
-                }
-            }
-
-            isEqual = this._getCompareForType(def.type);
-            dataType = this._dataTypes[def.type];
-
-            // check type if we have one
-            if (dataType && dataType.set) {
-                cast = dataType.set(newVal);
-                newVal = cast.val;
-                newType = cast.type;
-            }
-
-            // If we've defined a test, run it
-            if (def.test) {
-                err = def.test.call(this, newVal, newType);
-                if (err) {
-                    throw new TypeError('Property \'' + attr + '\' failed validation with error: ' + err);
-                }
-            }
-
-            // If we are required but undefined, throw error.
-            // If we are null and are not allowing null, throw error
-            // If we have a defined type and the new type doesn't match, and we are not null, throw error.
-
-            if (_.isUndefined(newVal) && def.required) {
-                throw new TypeError('Required property \'' + attr + '\' must be of type ' + def.type + '. Tried to set ' + newVal);
-            }
-            if (_.isNull(newVal) && def.required && !def.allowNull) {
-                throw new TypeError('Property \'' + attr + '\' must be of type ' + def.type + ' (cannot be null). Tried to set ' + newVal);
-            }
-            if ((def.type && def.type !== 'any' && def.type !== newType) && !_.isNull(newVal) && !_.isUndefined(newVal)) {
-                throw new TypeError('Property \'' + attr + '\' must be of type ' + def.type + '. Tried to set ' + newVal);
-            }
-            if (def.values && !_.contains(def.values, newVal)) {
-                throw new TypeError('Property \'' + attr + '\' must be one of values: ' + def.values.join(', ') + '. Tried to set ' + newVal);
-            }
-
-            hasChanged = !isEqual(currentVal, newVal, attr);
-
-            // enforce `setOnce` for properties if set
-            if (def.setOnce && currentVal !== undefined && hasChanged && !initial) {
-                throw new TypeError('Property \'' + attr + '\' can only be set once.');
-            }
-
-            // keep track of changed attributes
-            // and push to changes array
-            if (hasChanged) {
-                changes.push({prev: currentVal, val: newVal, key: attr});
-                self._changed[attr] = newVal;
-            } else {
-                delete self._changed[attr];
-            }
-        }
-
-        // actually update our values
-        _.each(changes, function (change) {
-            self._previousAttributes[change.key] = change.prev;
-            if (unset) {
-                delete self._values[change.key];
-            } else {
-                self._values[change.key] = change.val;
-            }
-        });
-
-        if (!silent && changes.length) self._pending = true;
-        if (!silent) {
-            _.each(changes, function (change) {
-                self.trigger('change:' + change.key, self, change.val, options);
-            });
-        }
-
-        // You might be wondering why there's a `while` loop here. Changes can
-        // be recursively nested within `"change"` events.
-        if (changing) return this;
-        if (!silent) {
-            while (this._pending) {
-                this._pending = false;
-                this.trigger('change', this, options);
-            }
-        }
-        this._pending = false;
-        this._changing = false;
-        return this;
-    },
-
-    get: function (attr) {
-        return this[attr];
-    },
-
-    // Toggle boolean properties or properties that have a `values`
-    // array in its definition.
-    toggle: function (property) {
-        var def = this._definition[property];
-        if (def.type === 'boolean') {
-            // if it's a bool, just flip it
-            this[property] = !this[property];
-        } else if (def && def.values) {
-            // If it's a property with an array of values
-            // skip to the next one looping back if at end.
-            this[property] = arrayNext(def.values, this[property]);
-        } else {
-            throw new TypeError('Can only toggle properties that are type `boolean` or have `values` array.');
-        }
-        return this;
-    },
-
-    // Get all of the attributes of the model at the time of the previous
-    // `"change"` event.
-    previousAttributes: function () {
-        return _.clone(this._previousAttributes);
-    },
-
-    // Determine if the model has changed since the last `"change"` event.
-    // If you specify an attribute name, determine if that attribute has changed.
-    hasChanged: function (attr) {
-        if (attr == null) return !_.isEmpty(this._changed);
-        return _.has(this._changed, attr);
-    },
-
-    // Return an object containing all the attributes that have changed, or
-    // false if there are no changed attributes. Useful for determining what
-    // parts of a view need to be updated and/or what attributes need to be
-    // persisted to the server. Unset attributes will be set to undefined.
-    // You can also pass an attributes object to diff against the model,
-    // determining if there *would be* a change.
-    changedAttributes: function (diff) {
-        if (!diff) return this.hasChanged() ? _.clone(this._changed) : false;
-        var val, changed = false;
-        var old = this._changing ? this._previousAttributes : this.attributes;
-        var def, isEqual;
-        for (var attr in diff) {
-            def = this._definition[attr];
-            if (!def) continue;
-            isEqual = this._getCompareForType(def.type);
-            if (isEqual(old[attr], (val = diff[attr]))) continue;
-            (changed || (changed = {}))[attr] = val;
-        }
-        return changed;
-    },
-
-    toJSON: function () {
-        return this.serialize();
-    },
-
-    unset: function (attr, options) {
-        var def = this._definition[attr];
-        var type = def.type;
-        var val;
-        if (def.required) {
-            val = _.result(def, 'default');
-            return this.set(attr, val, options);
-        } else {
-            return this.set(attr, val, _.extend({}, options, {unset: true}));
-        }
-    },
-
-    clear: function (options) {
-        var self = this;
-        _.each(_.keys(this.attributes), function (key) {
-            self.unset(key, options);
-        });
-        return this;
-    },
-
-    previous: function (attr) {
-        if (attr == null || !Object.keys(this._previousAttributes).length) return null;
-        return this._previousAttributes[attr];
-    },
-
-    // Get default values for a certain type
-    _getDefaultForType: function (type) {
-        var dataType = this._dataTypes[type];
-        return dataType && dataType.default;
-    },
-
-    // Determine which comparison algorithm to use for comparing a property
-    _getCompareForType: function (type) {
-        var dataType = this._dataTypes[type];
-        if (dataType && dataType.compare) return _.bind(dataType.compare, this);
-        return _.isEqual;
-    },
-
-    // Run validation against the next complete set of model attributes,
-    // returning `true` if all is well. Otherwise, fire an `"invalid"` event.
-    _validate: function (attrs, options) {
-        if (!options.validate || !this.validate) return true;
-        attrs = _.extend({}, this.attributes, attrs);
-        var error = this.validationError = this.validate(attrs, options) || null;
-        if (!error) return true;
-        this.trigger('invalid', this, error, _.extend(options || {}, {validationError: error}));
-        return false;
-    },
-
-    _createPropertyDefinition: function (name, desc, isSession) {
-        return createPropertyDefinition(this, name, desc, isSession);
-    },
-
-    // just makes friendlier errors when trying to define a new model
-    // only used when setting up original property definitions
-    _ensureValidType: function (type) {
-        return _.contains(['string', 'number', 'boolean', 'array', 'object', 'date', 'any'].concat(_.keys(this._dataTypes)), type) ? type : undefined;
-    },
-
-    getAttributes: function (options, raw) {
-        options || (options = {});
-        _.defaults(options, {
-            session: false,
-            props: false,
-            derived: false
-        });
-        var res = {};
-        var val, item, def;
-        for (item in this._definition) {
-            def = this._definition[item];
-            if ((options.session && def.session) || (options.props && !def.session)) {
-                val = (raw) ? this._values[item] : this[item];
-                if (typeof val === 'undefined') val = _.result(def, 'default');
-                if (typeof val !== 'undefined') res[item] = val;
-            }
-        }
-        if (options.derived) {
-            for (item in this._derived) res[item] = this[item];
-        }
-        return res;
-    },
-
-    _initDerived: function () {
-        var self = this;
-
-        _.each(this._derived, function (value, name) {
-            var def = self._derived[name];
-            def.deps = def.depList;
-
-            var update = function (options) {
-                options = options || {};
-
-                var newVal = def.fn.call(self);
-
-                if (self._cache[name] !== newVal || !def.cache) {
-                    if (def.cache) {
-                        self._previousAttributes[name] = self._cache[name];
-                    }
-                    self._cache[name] = newVal;
-                    self.trigger('change:' + name, self, self._cache[name]);
-                }
-            };
-
-            def.deps.forEach(function (propString) {
-                self._keyTree.add(propString, update);
-            });
-        });
-
-        this.on('all', function (eventName) {
-            if (changeRE.test(eventName)) {
-                self._keyTree.get(eventName.split(':')[1]).forEach(function (fn) {
-                    fn();
-                });
-            }
-        }, this);
-    },
-
-    _getDerivedProperty: function (name, flushCache) {
-        // is this a derived property that is cached
-        if (this._derived[name].cache) {
-            //set if this is the first time, or flushCache is set
-            if (flushCache || !this._cache.hasOwnProperty(name)) {
-                this._cache[name] = this._derived[name].fn.apply(this);
-            }
-            return this._cache[name];
-        } else {
-            return this._derived[name].fn.apply(this);
-        }
-    },
-
-    _initCollections: function () {
-        var coll;
-        if (!this._collections) return;
-        for (coll in this._collections) {
-            this[coll] = new this._collections[coll](null, {parent: this});
-        }
-    },
-
-    _initChildren: function () {
-        var child;
-        if (!this._children) return;
-        for (child in this._children) {
-            this[child] = new this._children[child]({}, {parent: this});
-            this.listenTo(this[child], 'all', this._getEventBubblingHandler(child));
-        }
-    },
-
-    // Returns a bound handler for doing event bubbling while
-    // adding a name to the change string.
-    _getEventBubblingHandler: function (propertyName) {
-        return _.bind(function (name, model, newValue) {
-            if (changeRE.test(name)) {
-                this.trigger('change:' + propertyName + '.' + name.split(':')[1], model, newValue);
-            } else if (name === 'change') {
-                this.trigger('change', this);
-            }
-        }, this);
-    },
-
-    // Check that all required attributes are present
-    _verifyRequired: function () {
-        var attrs = this.attributes; // should include session
-        for (var def in this._definition) {
-            if (this._definition[def].required && typeof attrs[def] === 'undefined') {
-                return false;
-            }
-        }
-        return true;
-    }
-});
-
-// getter for attributes
-Object.defineProperties(Base.prototype, {
-    attributes: {
-        get: function () {
-            return this.getAttributes({props: true, session: true});
-        }
-    },
-    all: {
-        get: function () {
-            return this.getAttributes({
-                session: true,
-                props: true,
-                derived: true
-            });
-        }
-    },
-    isState: {
-        get: function () { return true; },
-        set: function () { }
-    }
-});
-
-// helper for creating/storing property definitions and creating
-// appropriate getters/setters
-function createPropertyDefinition(object, name, desc, isSession) {
-    var def = object._definition[name] = {};
-    var type, descArray;
-
-    if (_.isString(desc)) {
-        // grab our type if all we've got is a string
-        type = object._ensureValidType(desc);
-        if (type) def.type = type;
-    } else {
-
-        //Transform array of ['type', required, default] to object form
-        if (_.isArray(desc)) {
-            descArray = desc;
-            desc = {
-                type: descArray[0],
-                required: descArray[1],
-                default: descArray[2]
-            };
-        }
-
-        type = object._ensureValidType(desc.type);
-        if (type) def.type = type;
-
-        if (desc.required) def.required = true;
-
-        if (desc.default && typeof desc.default === 'object') {
-            throw new TypeError('The default value for ' + name + ' cannot be an object/array, must be a value or a function which returns a value/object/array');
-        }
-        def.default = desc.default;
-
-        def.allowNull = desc.allowNull ? desc.allowNull : false;
-        if (desc.setOnce) def.setOnce = true;
-        if (def.required && _.isUndefined(def.default) && !def.setOnce) def.default = object._getDefaultForType(type);
-        def.test = desc.test;
-        def.values = desc.values;
-    }
-    if (isSession) def.session = true;
-
-    // define a getter/setter on the prototype
-    // but they get/set on the instance
-    Object.defineProperty(object, name, {
-        set: function (val) {
-            this.set(name, val);
-        },
-        get: function () {
-            var result = this._values[name];
-            var typeDef = this._dataTypes[def.type];
-            if (typeof result !== 'undefined') {
-                if (typeDef && typeDef.get) {
-                    result = typeDef.get(result);
-                }
-                return result;
-            }
-            result = _.result(def, 'default');
-            this._values[name] = result;
-            return result;
-        }
-    });
-
-    return def;
-}
-
-// helper for creating derived property definitions
-function createDerivedProperty(modelProto, name, definition) {
-    var def = modelProto._derived[name] = {
-        fn: _.isFunction(definition) ? definition : definition.fn,
-        cache: (definition.cache !== false),
-        depList: definition.deps || []
-    };
-
-    // add to our shared dependency list
-    _.each(def.depList, function (dep) {
-        modelProto._deps[dep] = _(modelProto._deps[dep] || []).union([name]);
-    });
-
-    // defined a top-level getter for derived names
-    Object.defineProperty(modelProto, name, {
-        get: function () {
-            return this._getDerivedProperty(name);
-        },
-        set: function () {
-            throw new TypeError('"' + name + '" is a derived property, it can\'t be set directly.');
-        }
-    });
-}
-
-var dataTypes = {
-    string: {
-        default: function () {
-            return '';
-        }
-    },
-    date: {
-        set: function (newVal) {
-            var newType;
-            if (newVal == null) {
-                newType = typeof null;
-            } else if (!_.isDate(newVal)) {
-                try {
-                    var dateVal = new Date(newVal).valueOf();
-                    if (isNaN(dateVal)) {
-                        // If the newVal cant be parsed, then try parseInt first
-                        dateVal = new Date(parseInt(newVal, 10)).valueOf();
-                        if (isNaN(dateVal)) throw TypeError;
-                    }
-                    newVal = dateVal;
-                    newType = 'date';
-                } catch (e) {
-                    newType = typeof newVal;
-                }
-            } else {
-                newType = 'date';
-                newVal = newVal.valueOf();
-            }
-
-            return {
-                val: newVal,
-                type: newType
-            };
-        },
-        get: function (val) {
-            if (val == null) { return val; }
-            return new Date(val);
-        },
-        default: function () {
-            return new Date();
-        }
-    },
-    array: {
-        set: function (newVal) {
-            return {
-                val: newVal,
-                type: _.isArray(newVal) ? 'array' : typeof newVal
-            };
-        },
-        default: function () {
-            return [];
-        }
-    },
-    object: {
-        set: function (newVal) {
-            var newType = typeof newVal;
-            // we have to have a way of supporting "missing" objects.
-            // Null is an object, but setting a value to undefined
-            // should work too, IMO. We just override it, in that case.
-            if (newType !== 'object' && _.isUndefined(newVal)) {
-                newVal = null;
-                newType = 'object';
-            }
-            return {
-                val: newVal,
-                type: newType
-            };
-        },
-        default: function () {
-            return {};
-        }
-    },
-    // the `state` data type is a bit special in that setting it should
-    // also bubble events
-    state: {
-        set: function (newVal) {
-            var isInstance = newVal instanceof Base || (newVal && newVal.isState);
-            if (isInstance) {
-                return {
-                    val: newVal,
-                    type: 'state'
-                };
-            } else {
-                return {
-                    val: newVal,
-                    type: typeof newVal
-                };
-            }
-        },
-        compare: function (currentVal, newVal, attributeName) {
-            var isSame = currentVal === newVal;
-
-            // if this has changed we want to also handle
-            // event propagation
-            if (!isSame) {
-                if (currentVal) {
-                    this.stopListening(currentVal);
-                }
-
-                if (newVal != null) {
-                    this.listenTo(newVal, 'all', this._getEventBubblingHandler(attributeName));
-                }
-            }
-
-            return isSame;
-        }
-    }
-};
-
-// the extend method used to extend prototypes, maintain inheritance chains for instanceof
-// and allow for additions to the model definitions.
-function extend(protoProps) {
-    var parent = this;
-    var child;
-    var args = [].slice.call(arguments);
-    var prop, item;
-
-    // The constructor function for the new subclass is either defined by you
-    // (the "constructor" property in your `extend` definition), or defaulted
-    // by us to simply call the parent's constructor.
-    if (protoProps && protoProps.hasOwnProperty('constructor')) {
-        child = protoProps.constructor;
-    } else {
-        child = function () {
-            return parent.apply(this, arguments);
-        };
+module.exports = {
+  createConstructor: function(spec){
+    var spec = spec || {}
+    var constructor = {};
+    //Create Prototype
+    var proto = {}
+    var baseProto = spec.baseProto || {}
+    _.extend(proto,baseProto)
+    var modules = spec.modules || []
+    modules.forEach(function(module){
+      _.extend(proto,module)}
+    )
+    var manualProto = spec.proto || {}
+    _.extend(proto, manualProto)
+    //save on constructor
+    constructor.proto = proto
+
+    constructor.construct = function(construtSpec){
+      var construtSpec = construtSpec || {};
+      var spawn = Object.create(proto)
+      spec.initialize(construtSpec, spawn)
+      return spawn;
     }
 
-    // Add static properties to the constructor function from parent
-    _.extend(child, parent);
-
-    // Set the prototype chain to inherit from `parent`, without calling
-    // `parent`'s constructor function.
-    var Surrogate = function () { this.constructor = child; };
-    Surrogate.prototype = parent.prototype;
-    child.prototype = new Surrogate();
-
-    // set prototype level objects
-    child.prototype._derived =  _.extend({}, parent.prototype._derived);
-    child.prototype._deps = _.extend({}, parent.prototype._deps);
-    child.prototype._definition = _.extend({}, parent.prototype._definition);
-    child.prototype._collections = _.extend({}, parent.prototype._collections);
-    child.prototype._children = _.extend({}, parent.prototype._children);
-    child.prototype._dataTypes = _.extend({}, parent.prototype._dataTypes || dataTypes);
-
-    // Mix in all prototype properties to the subclass if supplied.
-    if (protoProps) {
-        args.forEach(function processArg(def) {
-            var omitFromExtend = [
-                'dataTypes', 'props', 'session', 'derived', 'collections', 'children'
-            ];
-            if (def.dataTypes) {
-                _.each(def.dataTypes, function (def, name) {
-                    child.prototype._dataTypes[name] = def;
-                });
-            }
-            if (def.props) {
-                _.each(def.props, function (def, name) {
-                    createPropertyDefinition(child.prototype, name, def);
-                });
-            }
-            if (def.session) {
-                _.each(def.session, function (def, name) {
-                    createPropertyDefinition(child.prototype, name, def, true);
-                });
-            }
-            if (def.derived) {
-                _.each(def.derived, function (def, name) {
-                    createDerivedProperty(child.prototype, name, def);
-                });
-            }
-            if (def.collections) {
-                _.each(def.collections, function (constructor, name) {
-                    child.prototype._collections[name] = constructor;
-                });
-            }
-            if (def.children) {
-                _.each(def.children, function (constructor, name) {
-                    child.prototype._children[name] = constructor;
-                });
-            }
-            _.extend(child.prototype, _.omit(def, omitFromExtend));
-        });
-    }
-
-    var toString = Object.prototype.toString;
-
-    // Set a convenience property in case the parent's prototype is needed
-    // later.
-    child.__super__ = parent.prototype;
-
-    return child;
-}
-
-Base.extend = extend;
-
-// Our main exports
-module.exports = Base;
-
-},{"array-next":"/home/jay/Programming/JSProjects/learnjsgame/client/node_modules/ampersand-state/node_modules/array-next/array-next.js","backbone-events-standalone":"/home/jay/Programming/JSProjects/learnjsgame/client/node_modules/ampersand-state/node_modules/backbone-events-standalone/index.js","key-tree-store":"/home/jay/Programming/JSProjects/learnjsgame/client/node_modules/ampersand-state/node_modules/key-tree-store/key-tree-store.js","underscore":"/home/jay/Programming/JSProjects/learnjsgame/client/node_modules/ampersand-state/node_modules/underscore/underscore.js"}],"/home/jay/Programming/JSProjects/learnjsgame/client/node_modules/ampersand-state/node_modules/array-next/array-next.js":[function(require,module,exports){
-module.exports = function arrayNext(array, currentItem) {
-    var len = array.length;
-    var newIndex = array.indexOf(currentItem) + 1;
-    if (newIndex > (len - 1)) newIndex = 0;
-    return array[newIndex];
-};
-
-},{}],"/home/jay/Programming/JSProjects/learnjsgame/client/node_modules/ampersand-state/node_modules/backbone-events-standalone/backbone-events-standalone.js":[function(require,module,exports){
-/**
- * Standalone extraction of Backbone.Events, no external dependency required.
- * Degrades nicely when Backone/underscore are already available in the current
- * global context.
- *
- * Note that docs suggest to use underscore's `_.extend()` method to add Events
- * support to some given object. A `mixin()` method has been added to the Events
- * prototype to avoid using underscore for that sole purpose:
- *
- *     var myEventEmitter = BackboneEvents.mixin({});
- *
- * Or for a function constructor:
- *
- *     function MyConstructor(){}
- *     MyConstructor.prototype.foo = function(){}
- *     BackboneEvents.mixin(MyConstructor.prototype);
- *
- * (c) 2009-2013 Jeremy Ashkenas, DocumentCloud Inc.
- * (c) 2013 Nicolas Perriault
- */
-/* global exports:true, define, module */
-(function() {
-  var root = this,
-      breaker = {},
-      nativeForEach = Array.prototype.forEach,
-      hasOwnProperty = Object.prototype.hasOwnProperty,
-      slice = Array.prototype.slice,
-      idCounter = 0;
-
-  // Returns a partial implementation matching the minimal API subset required
-  // by Backbone.Events
-  function miniscore() {
-    return {
-      keys: Object.keys,
-
-      uniqueId: function(prefix) {
-        var id = ++idCounter + '';
-        return prefix ? prefix + id : id;
-      },
-
-      has: function(obj, key) {
-        return hasOwnProperty.call(obj, key);
-      },
-
-      each: function(obj, iterator, context) {
-        if (obj == null) return;
-        if (nativeForEach && obj.forEach === nativeForEach) {
-          obj.forEach(iterator, context);
-        } else if (obj.length === +obj.length) {
-          for (var i = 0, l = obj.length; i < l; i++) {
-            if (iterator.call(context, obj[i], i, obj) === breaker) return;
-          }
-        } else {
-          for (var key in obj) {
-            if (this.has(obj, key)) {
-              if (iterator.call(context, obj[key], key, obj) === breaker) return;
-            }
-          }
-        }
-      },
-
-      once: function(func) {
-        var ran = false, memo;
-        return function() {
-          if (ran) return memo;
-          ran = true;
-          memo = func.apply(this, arguments);
-          func = null;
-          return memo;
-        };
-      }
-    };
+    return constructor;
   }
-
-  var _ = miniscore(), Events;
-
-  // Backbone.Events
-  // ---------------
-
-  // A module that can be mixed in to *any object* in order to provide it with
-  // custom events. You may bind with `on` or remove with `off` callback
-  // functions to an event; `trigger`-ing an event fires all callbacks in
-  // succession.
-  //
-  //     var object = {};
-  //     _.extend(object, Backbone.Events);
-  //     object.on('expand', function(){ alert('expanded'); });
-  //     object.trigger('expand');
-  //
-  Events = {
-
-    // Bind an event to a `callback` function. Passing `"all"` will bind
-    // the callback to all events fired.
-    on: function(name, callback, context) {
-      if (!eventsApi(this, 'on', name, [callback, context]) || !callback) return this;
-      this._events || (this._events = {});
-      var events = this._events[name] || (this._events[name] = []);
-      events.push({callback: callback, context: context, ctx: context || this});
-      return this;
-    },
-
-    // Bind an event to only be triggered a single time. After the first time
-    // the callback is invoked, it will be removed.
-    once: function(name, callback, context) {
-      if (!eventsApi(this, 'once', name, [callback, context]) || !callback) return this;
-      var self = this;
-      var once = _.once(function() {
-        self.off(name, once);
-        callback.apply(this, arguments);
-      });
-      once._callback = callback;
-      return this.on(name, once, context);
-    },
-
-    // Remove one or many callbacks. If `context` is null, removes all
-    // callbacks with that function. If `callback` is null, removes all
-    // callbacks for the event. If `name` is null, removes all bound
-    // callbacks for all events.
-    off: function(name, callback, context) {
-      var retain, ev, events, names, i, l, j, k;
-      if (!this._events || !eventsApi(this, 'off', name, [callback, context])) return this;
-      if (!name && !callback && !context) {
-        this._events = {};
-        return this;
-      }
-
-      names = name ? [name] : _.keys(this._events);
-      for (i = 0, l = names.length; i < l; i++) {
-        name = names[i];
-        if (events = this._events[name]) {
-          this._events[name] = retain = [];
-          if (callback || context) {
-            for (j = 0, k = events.length; j < k; j++) {
-              ev = events[j];
-              if ((callback && callback !== ev.callback && callback !== ev.callback._callback) ||
-                  (context && context !== ev.context)) {
-                retain.push(ev);
-              }
-            }
-          }
-          if (!retain.length) delete this._events[name];
-        }
-      }
-
-      return this;
-    },
-
-    // Trigger one or many events, firing all bound callbacks. Callbacks are
-    // passed the same arguments as `trigger` is, apart from the event name
-    // (unless you're listening on `"all"`, which will cause your callback to
-    // receive the true name of the event as the first argument).
-    trigger: function(name) {
-      if (!this._events) return this;
-      var args = slice.call(arguments, 1);
-      if (!eventsApi(this, 'trigger', name, args)) return this;
-      var events = this._events[name];
-      var allEvents = this._events.all;
-      if (events) triggerEvents(events, args);
-      if (allEvents) triggerEvents(allEvents, arguments);
-      return this;
-    },
-
-    // Tell this object to stop listening to either specific events ... or
-    // to every object it's currently listening to.
-    stopListening: function(obj, name, callback) {
-      var listeners = this._listeners;
-      if (!listeners) return this;
-      var deleteListener = !name && !callback;
-      if (typeof name === 'object') callback = this;
-      if (obj) (listeners = {})[obj._listenerId] = obj;
-      for (var id in listeners) {
-        listeners[id].off(name, callback, this);
-        if (deleteListener) delete this._listeners[id];
-      }
-      return this;
-    }
-
-  };
-
-  // Regular expression used to split event strings.
-  var eventSplitter = /\s+/;
-
-  // Implement fancy features of the Events API such as multiple event
-  // names `"change blur"` and jQuery-style event maps `{change: action}`
-  // in terms of the existing API.
-  var eventsApi = function(obj, action, name, rest) {
-    if (!name) return true;
-
-    // Handle event maps.
-    if (typeof name === 'object') {
-      for (var key in name) {
-        obj[action].apply(obj, [key, name[key]].concat(rest));
-      }
-      return false;
-    }
-
-    // Handle space separated event names.
-    if (eventSplitter.test(name)) {
-      var names = name.split(eventSplitter);
-      for (var i = 0, l = names.length; i < l; i++) {
-        obj[action].apply(obj, [names[i]].concat(rest));
-      }
-      return false;
-    }
-
-    return true;
-  };
-
-  // A difficult-to-believe, but optimized internal dispatch function for
-  // triggering events. Tries to keep the usual cases speedy (most internal
-  // Backbone events have 3 arguments).
-  var triggerEvents = function(events, args) {
-    var ev, i = -1, l = events.length, a1 = args[0], a2 = args[1], a3 = args[2];
-    switch (args.length) {
-      case 0: while (++i < l) (ev = events[i]).callback.call(ev.ctx); return;
-      case 1: while (++i < l) (ev = events[i]).callback.call(ev.ctx, a1); return;
-      case 2: while (++i < l) (ev = events[i]).callback.call(ev.ctx, a1, a2); return;
-      case 3: while (++i < l) (ev = events[i]).callback.call(ev.ctx, a1, a2, a3); return;
-      default: while (++i < l) (ev = events[i]).callback.apply(ev.ctx, args);
-    }
-  };
-
-  var listenMethods = {listenTo: 'on', listenToOnce: 'once'};
-
-  // Inversion-of-control versions of `on` and `once`. Tell *this* object to
-  // listen to an event in another object ... keeping track of what it's
-  // listening to.
-  _.each(listenMethods, function(implementation, method) {
-    Events[method] = function(obj, name, callback) {
-      var listeners = this._listeners || (this._listeners = {});
-      var id = obj._listenerId || (obj._listenerId = _.uniqueId('l'));
-      listeners[id] = obj;
-      if (typeof name === 'object') callback = this;
-      obj[implementation](name, callback, this);
-      return this;
-    };
-  });
-
-  // Aliases for backwards compatibility.
-  Events.bind   = Events.on;
-  Events.unbind = Events.off;
-
-  // Mixin utility
-  Events.mixin = function(proto) {
-    var exports = ['on', 'once', 'off', 'trigger', 'stopListening', 'listenTo',
-                   'listenToOnce', 'bind', 'unbind'];
-    _.each(exports, function(name) {
-      proto[name] = this[name];
-    }, this);
-    return proto;
-  };
-
-  // Export Events as BackboneEvents depending on current context
-  if (typeof define === "function") {
-    define(function() {
-      return Events;
-    });
-  } else if (typeof exports !== 'undefined') {
-    if (typeof module !== 'undefined' && module.exports) {
-      exports = module.exports = Events;
-    }
-    exports.BackboneEvents = Events;
-  } else {
-    root.BackboneEvents = Events;
-  }
-})(this);
-
-},{}],"/home/jay/Programming/JSProjects/learnjsgame/client/node_modules/ampersand-state/node_modules/backbone-events-standalone/index.js":[function(require,module,exports){
-module.exports = require('./backbone-events-standalone');
-
-},{"./backbone-events-standalone":"/home/jay/Programming/JSProjects/learnjsgame/client/node_modules/ampersand-state/node_modules/backbone-events-standalone/backbone-events-standalone.js"}],"/home/jay/Programming/JSProjects/learnjsgame/client/node_modules/ampersand-state/node_modules/key-tree-store/key-tree-store.js":[function(require,module,exports){
-function KeyTreeStore() {
-    this.storage = {};
 }
+},{"underscore":"/home/jay/Programming/JSProjects/learnjsgame/client/node_modules/underscore/underscore.js"}],"/home/jay/Programming/JSProjects/learnjsgame/client/models/display_object_constructor.js":[function(require,module,exports){
+var position_constructor = require('./position_constructor');
 
-// add an object to the store
-KeyTreeStore.prototype.add = function (keypath, obj) {
-    var arr = this.storage[keypath] || (this.storage[keypath] = []);
-    arr.push(obj);
-};
+var constructorSpec = {
+  initialize:function(spec,spawn){
+    spawn.position = spec.position || position_constructor.construct();
+  }
+}
+var constructorMaker = require('./constructor_maker')
+var construct = constructorMaker.createConstructor(constructorSpec);
 
-// remove an object
-KeyTreeStore.prototype.remove = function (obj) {
-    var path, arr;
-    for (path in this.storage) {
-        arr = this.storage[path];
-        arr.some(function (item, index) {
-            if (item === obj) {
-                arr.splice(index, 1);
-                return true;
-            }
-        });
-    }
-};
+module.exports = construct
+},{"./constructor_maker":"/home/jay/Programming/JSProjects/learnjsgame/client/models/constructor_maker.js","./position_constructor":"/home/jay/Programming/JSProjects/learnjsgame/client/models/position_constructor.js"}],"/home/jay/Programming/JSProjects/learnjsgame/client/models/hero_constructor.js":[function(require,module,exports){
+var moveable_object_constructor = require('./moveable_object_constructor');
+var position_constructor = require('./position_constructor');
+var _ = require('underscore');
 
-// grab all relevant objects
-KeyTreeStore.prototype.get = function (keypath) {
-    var res = [];
-    var key;
+var constructorSpec = {
+  baseProto: moveable_object_constructor.proto,
+  modules: [require('../mixins/seer')],
+  initialize:function(spec,spawn){
+    spawn.position = spec.position || position_constructor.construct();
+    spawn.speed = spec.speed || 1
+  }
+}
+var constructorMaker = require('./constructor_maker')
+var construct = constructorMaker.createConstructor(constructorSpec);
 
-    for (key in this.storage) {
-        if (keypath === key || key.indexOf(keypath + '.') === 0) {
-            res = res.concat(this.storage[key]);
+module.exports = construct
+},{"../mixins/seer":"/home/jay/Programming/JSProjects/learnjsgame/client/mixins/seer.js","./constructor_maker":"/home/jay/Programming/JSProjects/learnjsgame/client/models/constructor_maker.js","./moveable_object_constructor":"/home/jay/Programming/JSProjects/learnjsgame/client/models/moveable_object_constructor.js","./position_constructor":"/home/jay/Programming/JSProjects/learnjsgame/client/models/position_constructor.js","underscore":"/home/jay/Programming/JSProjects/learnjsgame/client/node_modules/underscore/underscore.js"}],"/home/jay/Programming/JSProjects/learnjsgame/client/models/moveable_object_constructor.js":[function(require,module,exports){
+var position_constructor = require('./position_constructor');
+var display_object_constructor = require('./display_object_constructor');
+var _ = require('underscore');
+math = require('../lib/math')
+
+var constructorSpec = {
+  baseProto: display_object_constructor.proto,
+  proto:{
+    moveTowardsTarget:function(){
+      if(this.targetPosition){
+        this.moveTowardsPosition(this.targetPosition)
+        if(this.position.distanceTo(this.targetPosition)<this.speed*5){
+          this.targetPosition = null;
         }
-    }
+      }
+    },
+    moveTowardsPosition:function(targetPosition){
+      var pixelsPerMove = this.speed * 5;
+      var diffX = this.position.xDifference(targetPosition);
+      var diffY = this.position.yDifference(targetPosition);
 
-    return res;
-};
+      var absDiffX = Math.abs(diffX);
+      var absDiffY = Math.abs(diffY);
 
-module.exports = KeyTreeStore;
+      var totalDiff = absDiffX + absDiffY
 
-},{}],"/home/jay/Programming/JSProjects/learnjsgame/client/node_modules/ampersand-state/node_modules/underscore/underscore.js":[function(require,module,exports){
+      if( diffX!==0 ){
+        if( diffY === 0  ){
+          var absMoveX = pixelsPerMove;
+        } else {
+          var xRatio = absDiffX/totalDiff
+          var absMoveX = pixelsPerMove * xRatio;
+        }
+        var xMove = Math.ceil( math.sign(diffX) * absMoveX );
+        this.position.x = this.position.x + xMove;
+      }
+
+      if( diffY!==0 ){
+        if( diffX === 0  ){
+          var absMoveY = pixelsPerMove
+        } else {
+          var yRatio = absDiffY/totalDiff
+          var absMoveY = pixelsPerMove * yRatio;
+        }
+        var yMove = Math.ceil( math.sign(diffY) * absMoveY );
+        this.position.y = this.position.y + yMove;
+      } 
+    }  
+  },
+  initialize:function(spec,spawn){
+    spawn.position = spec.position || position_constructor.construct();
+    spawn.speed = spec.speed || 1
+  }
+}
+var constructorMaker = require('./constructor_maker')
+var construct = constructorMaker.createConstructor(constructorSpec);
+
+module.exports = construct
+},{"../lib/math":"/home/jay/Programming/JSProjects/learnjsgame/client/lib/math.js","./constructor_maker":"/home/jay/Programming/JSProjects/learnjsgame/client/models/constructor_maker.js","./display_object_constructor":"/home/jay/Programming/JSProjects/learnjsgame/client/models/display_object_constructor.js","./position_constructor":"/home/jay/Programming/JSProjects/learnjsgame/client/models/position_constructor.js","underscore":"/home/jay/Programming/JSProjects/learnjsgame/client/node_modules/underscore/underscore.js"}],"/home/jay/Programming/JSProjects/learnjsgame/client/models/position_constructor.js":[function(require,module,exports){
+var constructorSpec = {
+  proto:{
+    xDifference: function(targetPosition){
+      return targetPosition.x - this.x;
+    },
+    yDifference: function(targetPosition){
+      return targetPosition.y - this.y;
+    },
+
+    distanceTo: function(targetPosition){
+      var absdiffX = Math.abs(this.xDifference(targetPosition));
+      var absdiffY = Math.abs(this.yDifference(targetPosition));
+      return Math.sqrt(Math.pow(absdiffX,2) + Math.pow(absdiffY,2));
+    }      
+  },
+  initialize:function(spec,spawn){
+    spawn.x = spec.x || 0;
+    spawn.y = spec.y || 0;
+  }
+}
+var constructorMaker = require('./constructor_maker')
+var construct = constructorMaker.createConstructor(constructorSpec);
+
+module.exports = construct
+},{"./constructor_maker":"/home/jay/Programming/JSProjects/learnjsgame/client/models/constructor_maker.js"}],"/home/jay/Programming/JSProjects/learnjsgame/client/node_modules/underscore/underscore.js":[function(require,module,exports){
 //     Underscore.js 1.8.2
 //     http://underscorejs.org
 //     (c) 2009-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
@@ -2783,8 +1710,8 @@ module.exports = KeyTreeStore;
 }.call(this));
 
 },{}],"/home/jay/Programming/JSProjects/learnjsgame/client/views/stage_view.js":[function(require,module,exports){
-var Hero = require('../models/hero')
-var DisplayObject = require('../models/display_object')
+var heroConstructor = require('../models/hero_constructor')
+var DisplayObjectConstructor = require('../models/display_object_constructor')
 
 var StageView = function(renderer){
   this.drawCount = 0
@@ -2794,20 +1721,32 @@ var StageView = function(renderer){
 
   var blobTexture = PIXI.Texture.fromImage("blob2.png");
   this.heroSprite = new PIXI.Sprite(blobTexture);
+  this.heroSprite.interactive = true;
 
   this.doorSprite = new PIXI.Sprite(blobTexture);
-
+  this.doorSprite.interactive = true;
   this.doorSprite.position.x = 100;
   this.doorSprite.position.y = 100;
-
-  this.heroModel = new Hero({speed: 1})
-  this.stage.addChild(this.heroSprite);
-  this.stage.addChild(this.doorSprite)
-  requestAnimationFrame(this.animate.bind(this));
 
   this.stage.mousedown = function(data){
     this.heroModel.targetPosition = { x:data.global.x, y:data.global.y }
   }.bind(this)
+
+  this.doorSprite.mouseover = function(){
+    console.log('doorSpriteClick');
+    console.log(this.heroModel.see({a:1,b:2}));
+  }.bind(this);
+
+  this.heroSprite.mouseover = function(){
+    console.log('heroSpriteClick');
+  }.bind(this);
+
+  this.heroModel = heroConstructor.construct({speed: 1})
+  this.stage.addChild(this.heroSprite);
+  this.stage.addChild(this.doorSprite)
+  requestAnimationFrame(this.animate.bind(this));
+
+
 
 }
 
@@ -2831,4 +1770,4 @@ StageView.prototype = {
 }
 
 module.exports = StageView;
-},{"../models/display_object":"/home/jay/Programming/JSProjects/learnjsgame/client/models/display_object.js","../models/hero":"/home/jay/Programming/JSProjects/learnjsgame/client/models/hero.js"}]},{},["/home/jay/Programming/JSProjects/learnjsgame/client/main.js"]);
+},{"../models/display_object_constructor":"/home/jay/Programming/JSProjects/learnjsgame/client/models/display_object_constructor.js","../models/hero_constructor":"/home/jay/Programming/JSProjects/learnjsgame/client/models/hero_constructor.js"}]},{},["/home/jay/Programming/JSProjects/learnjsgame/client/main.js"]);
