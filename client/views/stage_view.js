@@ -1,45 +1,41 @@
 var Hero = require('../models/hero')
-var DisplayObject = require('../models/display_object')
+
 var SpriteView = require('./sprite_view')
 
-var StageView = function(renderer){
+var StageView = function(spec){
+  //set up stage
   this.drawCount = 0
-  this.renderer = renderer;
-  var interactive = true;
-  this.stage = new PIXI.Stage(0x66FF99, interactive);
+  this.stage = spec.stage;
+  this.renderer = spec.renderer;
 
-  var blobTexture = PIXI.Texture.fromImage("blob2.png");
-  this.heroSprite = new PIXI.Sprite(blobTexture);
-
-  this.doorSprite = new PIXI.Sprite(blobTexture);
-
-  this.doorSprite.position.x = 100;
-  this.doorSprite.position.y = 100;
-
-  this.heroModel = new Hero({speed: 1})
-  this.heroView = new SpriteView({ model:this.heroModel, sprite:this.heroSprite})
-
-  this.stage.addChild(this.heroSprite);
-  this.stage.addChild(this.doorSprite)
-  requestAnimationFrame(this.animate.bind(this));
-
+  //set up hero
+  this.heroSpriteView = spec.heroSpriteView;
+  this.spriteViews = spec.spriteViews;
+  this.stage.addChild(this.heroSpriteView.sprite);
   this.stage.mouseup = function(data){
-    this.heroModel.targetPosition = { x:data.global.x, y:data.global.y }
+    this.heroSpriteView.model.targetPosition = { x:data.global.x, y:data.global.y }
   }.bind(this)
 
+  //add other objects
+  this.spriteViews.forEach(function(spriteView){
+    this.stage.addChild(spriteView.sprite);
+  },this)
+
+  //start animation
+  requestAnimationFrame(this.animate.bind(this));
 }
 
 StageView.prototype = {
   animate: function(){
     if (this.drawCount%1===0){
-      this.updateModelPositions();
+      this.updateHeroPosition();
     }
     this.renderer.render(this.stage);
     requestAnimationFrame(this.animate.bind(this));
     this.drawCount++;
   },
-  updateModelPositions:function(){
-    this.heroModel.moveTowardsTarget();
+  updateHeroPosition:function(){
+    this.heroSpriteView.model.moveTowardsTarget();
   },
 }
 

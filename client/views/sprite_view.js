@@ -2,9 +2,9 @@
 var SpriteView = function(spec){
   var spec = spec || {}
   this.model = spec.model;
-  this.sprite = spec.sprite
+  this.sprite = spec.sprite;
+  this.syncPosition();
   this.model.on('change',function(){
-    console.log('model changed')
     this.syncPosition();
   },this)
 }
@@ -12,7 +12,6 @@ var SpriteView = function(spec){
 
 SpriteView.prototype = {
   syncPosition:function(){
-    console.log('syncing position')
     this.sprite.position.x = this.model.position.x;
     this.sprite.position.y = this.model.position.y;
   },

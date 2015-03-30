@@ -5,7 +5,10 @@ module.exports = {
   }
 }
 },{}],"/home/jay/Programming/JSProjects/learnjsgame/client/main.js":[function(require,module,exports){
-var StageView = require('./views/stage_view')
+var StageView = require('./views/stage_view');
+var DisplayObject = require('./models/display_object');
+var Hero = require('./models/hero')
+var SpriteView = require('./views/sprite_view');
 
 window.onload = function(){
   var editor = ace.edit("editor");
@@ -18,12 +21,38 @@ window.onload = function(){
   editor.resize()
 	// You can use either PIXI.WebGLRenderer or PIXI.CanvasRenderer
 	var renderer = new PIXI.WebGLRenderer(800, 600);
-  var stageView = new StageView(renderer)
+  var blobTexture = PIXI.Texture.fromImage("blob2.png");
+  
+  //set up models
+  var heroModel = new Hero({speed: 1})
+  var doorModel = new DisplayObject({speed: 1, position:{x:100,y:100}})
+  //and sprites
+  var heroSprite = new PIXI.Sprite(blobTexture);
+  var doorSprite = new PIXI.Sprite(blobTexture);
+
+  //create views
+  var spriteViews = [];
+  var doorView = new SpriteView({ model:doorModel, sprite:doorSprite });
+  spriteViews.push(doorView);
+  var heroView = new SpriteView({ model:heroModel, sprite:heroSprite });
+
+  //create stage
+  var interactive = true;
+  var stage = new PIXI.Stage(0x66FF99, interactive);
+
+  //create view for the stage and sprites
+  var stageView = new StageView({
+    renderer:renderer,
+    heroSpriteView: heroView,
+    stage: stage,
+    spriteViews:spriteViews,
+  })
+
 	document.body.appendChild(stageView.renderer.view);
 }
 
 
-},{"./views/stage_view":"/home/jay/Programming/JSProjects/learnjsgame/client/views/stage_view.js"}],"/home/jay/Programming/JSProjects/learnjsgame/client/mixins/seer.js":[function(require,module,exports){
+},{"./models/display_object":"/home/jay/Programming/JSProjects/learnjsgame/client/models/display_object.js","./models/hero":"/home/jay/Programming/JSProjects/learnjsgame/client/models/hero.js","./views/sprite_view":"/home/jay/Programming/JSProjects/learnjsgame/client/views/sprite_view.js","./views/stage_view":"/home/jay/Programming/JSProjects/learnjsgame/client/views/stage_view.js"}],"/home/jay/Programming/JSProjects/learnjsgame/client/mixins/seer.js":[function(require,module,exports){
 module.exports = {
   see:function(object){
     return JSON.stringify(object);
@@ -36,9 +65,6 @@ var DisplayObject = State.extend({
   children:{
     position:Position
   },
-  observe:function(){
-    return {};
-  }
 })
 
 module.exports = DisplayObject
@@ -2787,9 +2813,9 @@ module.exports = KeyTreeStore;
 var SpriteView = function(spec){
   var spec = spec || {}
   this.model = spec.model;
-  this.sprite = spec.sprite
+  this.sprite = spec.sprite;
+  this.syncPosition();
   this.model.on('change',function(){
-    console.log('model changed')
     this.syncPosition();
   },this)
 }
@@ -2797,7 +2823,6 @@ var SpriteView = function(spec){
 
 SpriteView.prototype = {
   syncPosition:function(){
-    console.log('syncing position')
     this.sprite.position.x = this.model.position.x;
     this.sprite.position.y = this.model.position.y;
   },
@@ -2806,49 +2831,45 @@ SpriteView.prototype = {
 module.exports = SpriteView
 },{}],"/home/jay/Programming/JSProjects/learnjsgame/client/views/stage_view.js":[function(require,module,exports){
 var Hero = require('../models/hero')
-var DisplayObject = require('../models/display_object')
+
 var SpriteView = require('./sprite_view')
 
-var StageView = function(renderer){
+var StageView = function(spec){
+  //set up stage
   this.drawCount = 0
-  this.renderer = renderer;
-  var interactive = true;
-  this.stage = new PIXI.Stage(0x66FF99, interactive);
+  this.stage = spec.stage;
+  this.renderer = spec.renderer;
 
-  var blobTexture = PIXI.Texture.fromImage("blob2.png");
-  this.heroSprite = new PIXI.Sprite(blobTexture);
-
-  this.doorSprite = new PIXI.Sprite(blobTexture);
-
-  this.doorSprite.position.x = 100;
-  this.doorSprite.position.y = 100;
-
-  this.heroModel = new Hero({speed: 1})
-  this.heroView = new SpriteView({ model:this.heroModel, sprite:this.heroSprite})
-
-  this.stage.addChild(this.heroSprite);
-  this.stage.addChild(this.doorSprite)
-  requestAnimationFrame(this.animate.bind(this));
-
+  //set up hero
+  this.heroSpriteView = spec.heroSpriteView;
+  this.spriteViews = spec.spriteViews;
+  this.stage.addChild(this.heroSpriteView.sprite);
   this.stage.mouseup = function(data){
-    this.heroModel.targetPosition = { x:data.global.x, y:data.global.y }
+    this.heroSpriteView.model.targetPosition = { x:data.global.x, y:data.global.y }
   }.bind(this)
 
+  //add other objects
+  this.spriteViews.forEach(function(spriteView){
+    this.stage.addChild(spriteView.sprite);
+  },this)
+
+  //start animation
+  requestAnimationFrame(this.animate.bind(this));
 }
 
 StageView.prototype = {
   animate: function(){
     if (this.drawCount%1===0){
-      this.updateModelPositions();
+      this.updateHeroPosition();
     }
     this.renderer.render(this.stage);
     requestAnimationFrame(this.animate.bind(this));
     this.drawCount++;
   },
-  updateModelPositions:function(){
-    this.heroModel.moveTowardsTarget();
+  updateHeroPosition:function(){
+    this.heroSpriteView.model.moveTowardsTarget();
   },
 }
 
 module.exports = StageView;
-},{"../models/display_object":"/home/jay/Programming/JSProjects/learnjsgame/client/models/display_object.js","../models/hero":"/home/jay/Programming/JSProjects/learnjsgame/client/models/hero.js","./sprite_view":"/home/jay/Programming/JSProjects/learnjsgame/client/views/sprite_view.js"}]},{},["/home/jay/Programming/JSProjects/learnjsgame/client/main.js"]);
+},{"../models/hero":"/home/jay/Programming/JSProjects/learnjsgame/client/models/hero.js","./sprite_view":"/home/jay/Programming/JSProjects/learnjsgame/client/views/sprite_view.js"}]},{},["/home/jay/Programming/JSProjects/learnjsgame/client/main.js"]);

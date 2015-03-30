@@ -1,4 +1,7 @@
-var StageView = require('./views/stage_view')
+var StageView = require('./views/stage_view');
+var DisplayObject = require('./models/display_object');
+var Hero = require('./models/hero')
+var SpriteView = require('./views/sprite_view');
 
 window.onload = function(){
   var editor = ace.edit("editor");
@@ -11,7 +14,33 @@ window.onload = function(){
   editor.resize()
 	// You can use either PIXI.WebGLRenderer or PIXI.CanvasRenderer
 	var renderer = new PIXI.WebGLRenderer(800, 600);
-  var stageView = new StageView(renderer)
+  var blobTexture = PIXI.Texture.fromImage("blob2.png");
+  
+  //set up models
+  var heroModel = new Hero({speed: 1})
+  var doorModel = new DisplayObject({speed: 1, position:{x:100,y:100}})
+  //and sprites
+  var heroSprite = new PIXI.Sprite(blobTexture);
+  var doorSprite = new PIXI.Sprite(blobTexture);
+
+  //create views
+  var spriteViews = [];
+  var doorView = new SpriteView({ model:doorModel, sprite:doorSprite });
+  spriteViews.push(doorView);
+  var heroView = new SpriteView({ model:heroModel, sprite:heroSprite });
+
+  //create stage
+  var interactive = true;
+  var stage = new PIXI.Stage(0x66FF99, interactive);
+
+  //create view for the stage and sprites
+  var stageView = new StageView({
+    renderer:renderer,
+    heroSpriteView: heroView,
+    stage: stage,
+    spriteViews:spriteViews,
+  })
+
 	document.body.appendChild(stageView.renderer.view);
 }
 
