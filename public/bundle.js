@@ -2782,9 +2782,32 @@ module.exports = KeyTreeStore;
   }
 }.call(this));
 
+},{}],"/home/jay/Programming/JSProjects/learnjsgame/client/views/sprite_view.js":[function(require,module,exports){
+
+var SpriteView = function(spec){
+  var spec = spec || {}
+  this.model = spec.model;
+  this.sprite = spec.sprite
+  this.model.on('change',function(){
+    console.log('model changed')
+    this.syncPosition();
+  },this)
+}
+
+
+SpriteView.prototype = {
+  syncPosition:function(){
+    console.log('syncing position')
+    this.sprite.position.x = this.model.position.x;
+    this.sprite.position.y = this.model.position.y;
+  },
+}
+
+module.exports = SpriteView
 },{}],"/home/jay/Programming/JSProjects/learnjsgame/client/views/stage_view.js":[function(require,module,exports){
 var Hero = require('../models/hero')
 var DisplayObject = require('../models/display_object')
+var SpriteView = require('./sprite_view')
 
 var StageView = function(renderer){
   this.drawCount = 0
@@ -2801,11 +2824,13 @@ var StageView = function(renderer){
   this.doorSprite.position.y = 100;
 
   this.heroModel = new Hero({speed: 1})
+  this.heroView = new SpriteView({ model:this.heroModel, sprite:this.heroSprite})
+
   this.stage.addChild(this.heroSprite);
   this.stage.addChild(this.doorSprite)
   requestAnimationFrame(this.animate.bind(this));
 
-  this.stage.mousedown = function(data){
+  this.stage.mouseup = function(data){
     this.heroModel.targetPosition = { x:data.global.x, y:data.global.y }
   }.bind(this)
 
@@ -2816,7 +2841,6 @@ StageView.prototype = {
     if (this.drawCount%1===0){
       this.updateModelPositions();
     }
-    this.setViewPositions();
     this.renderer.render(this.stage);
     requestAnimationFrame(this.animate.bind(this));
     this.drawCount++;
@@ -2824,11 +2848,7 @@ StageView.prototype = {
   updateModelPositions:function(){
     this.heroModel.moveTowardsTarget();
   },
-  setViewPositions: function(){
-    this.heroSprite.position.x = this.heroModel.position.x;
-    this.heroSprite.position.y = this.heroModel.position.y;
-  }
 }
 
 module.exports = StageView;
-},{"../models/display_object":"/home/jay/Programming/JSProjects/learnjsgame/client/models/display_object.js","../models/hero":"/home/jay/Programming/JSProjects/learnjsgame/client/models/hero.js"}]},{},["/home/jay/Programming/JSProjects/learnjsgame/client/main.js"]);
+},{"../models/display_object":"/home/jay/Programming/JSProjects/learnjsgame/client/models/display_object.js","../models/hero":"/home/jay/Programming/JSProjects/learnjsgame/client/models/hero.js","./sprite_view":"/home/jay/Programming/JSProjects/learnjsgame/client/views/sprite_view.js"}]},{},["/home/jay/Programming/JSProjects/learnjsgame/client/main.js"]);
