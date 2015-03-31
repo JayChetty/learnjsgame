@@ -10,15 +10,22 @@ var StageView = function(spec){
 
   //set up hero
   this.heroSpriteView = spec.heroSpriteView;
+  this.heroModel = this.heroSpriteView.model
   this.spriteViews = spec.spriteViews;
   this.stage.addChild(this.heroSpriteView.sprite);
-  this.stage.mouseup = function(data){
-    this.heroSpriteView.model.targetPosition = { x:data.global.x, y:data.global.y }
+  this.stage.mousedown = function(data){
+    this.heroSpriteView.model.target = { position: { x:data.global.x, y:data.global.y }}
   }.bind(this)
 
   //add other objects
   this.spriteViews.forEach(function(spriteView){
     this.stage.addChild(spriteView.sprite);
+    spriteView.sprite.interactive = true;
+    spriteView.sprite.mouseup = function(data){
+      console.log('data', data);
+      console.log(this.stageView.heroModel.see(this.target.model));
+      this.stageView.heroSpriteView.model.target = this.target.model
+    }.bind({stageView:this, target:spriteView})
   },this)
 
   //start animation

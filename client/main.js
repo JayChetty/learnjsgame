@@ -2,6 +2,7 @@ var StageView = require('./views/stage_view');
 var DisplayObject = require('./models/display_object');
 var Hero = require('./models/hero')
 var SpriteView = require('./views/sprite_view');
+var app = require('ampersand-app');
 
 window.onload = function(){
   var editor = ace.edit("editor");
@@ -12,6 +13,10 @@ window.onload = function(){
   editor.getSession().setMode("ace/mode/javascript");
   editor.setValue("Some text in the editor"); 
   editor.resize()
+  app.on('display-target',function(target){
+    console.log('target', target)
+    editor.setValue("Now at target yo");
+  })
 	// You can use either PIXI.WebGLRenderer or PIXI.CanvasRenderer
 	var renderer = new PIXI.WebGLRenderer(800, 600);
   var blobTexture = PIXI.Texture.fromImage("blob2.png");
