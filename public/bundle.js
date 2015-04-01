@@ -23,6 +23,18 @@ window.onload = function(){
   app.on('display-target',function(target){
     console.log('target', target)
     editor.setValue("Now at target yo");
+    actionEl = document.querySelector('#actions');
+    console.log('actionEl')
+    actionEl.innerHTML = "";
+    skills = {talk:"", laugh:""};
+    for (skill in target.actions){
+      var skillItem = window.document.createElement('li');
+      var skillButton = window.document.createElement('a');
+      // skillButton.addEventListener('click',this.skillClicked,false);
+      skillButton.innerHTML = skill;
+      skillItem.appendChild(skillButton);
+      actionEl.appendChild(skillItem);
+    }
   })
 	// You can use either PIXI.WebGLRenderer or PIXI.CanvasRenderer
 	var renderer = new PIXI.WebGLRenderer(800, 600);
@@ -31,6 +43,12 @@ window.onload = function(){
   //set up models
   var heroModel = new Hero({speed: 1})
   var doorModel = new DisplayObject({speed: 1, position:{x:100,y:100}})
+
+  doorModel.actions = {
+    open:function(){
+      console.log('open the door, fall on the floor..')
+    }
+  }
   //and sprites
   var heroSprite = new PIXI.Sprite(blobTexture);
   var doorSprite = new PIXI.Sprite(blobTexture);
